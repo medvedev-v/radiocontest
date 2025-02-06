@@ -1,0 +1,6 @@
+version: '2.23'
+
+services:
+  radiocontest:
+    image: cimg/go:1.17
+    
