@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type TeamMember struct {
+type Teammate struct {
 	ID     int `json:"id"`
 	TeamID int `json:"team_id"`
 	UserID int `json:"user_id"`
