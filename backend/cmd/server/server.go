@@ -3,39 +3,55 @@ package server
 import (
 	"log"
 	"net/http"
+	"time"
 
-	mux "github.com/gorilla/mux"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 
-	handler "github.com/medvedev-v/radiocontest/internal/handler"
-	repository "github.com/medvedev-v/radiocontest/internal/repository"
-	mysql "github.com/medvedev-v/radiocontest/pkg/mysql"
+	"github.com/medvedev-v/radiocontest/internal/handler"
+	"github.com/medvedev-v/radiocontest/internal/repository"
+	"github.com/medvedev-v/radiocontest/pkg/mysql"
 )
 
 func StartAndServe() {
+	// DB Connect
 	db, err := mysql.Connect()
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to DB: %v", err)
 	}
 	defer db.Close()
 
-	// Роутинг
-	r := mux.NewRouter()
+	// Repos init
+	operatorRepo := repository.NewOperatorRepository(db)
 
-	userRepo := repository.NewUserRepository(db)
-	userHandler := handler.NewUserHandler(userRepo)
-	//r.HandleFunc("/echo", echoHandler.Echo).Methods("GET")
-	r.HandleFunc("/users", userHandler.CreateUser).Methods("POST")
-	r.HandleFunc("/users/{id}", userHandler.GetUser).Methods("GET")
-	r.HandleFunc("/users/{id}", userHandler.UpdateUser).Methods("PUT")
-	r.HandleFunc("/users/{id}", userHandler.DeleteUser).Methods("DELETE")
+	// Handlers init
+	operatorHandler := handler.NewOperatorHandler(operatorRepo)
 
-	/**teammateRepo := repository.NewTeammateRepository(db)
-	teammateHandler := handler.NewTeammateHandler(teammateRepo)
-	r.HandleFunc("/teammates", teammateHandler.CreateUser).Methods("POST")
-	r.HandleFunc("/teammates/{id}", teammateHandler.GetUser).Methods("GET")
-	r.HandleFunc("/teammates/{id}", teammateHandler.UpdateUser).Methods("PUT")
-	r.HandleFunc("/teammates/{id}", teammateHandler.DeleteUser).Methods("DELETE")**/
+	// Gin router
+	r := gin.Default()
 
-	log.Println("Server is running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"}, // для продакшена заменить на конкретные домены
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
+	// API V1
+	api := r.Group("/api/v1")
+	{
+		// Operator Endpoints
+		api.POST("/operator", operatorHandler.CreateOperator)
+		api.GET("/operator/:id", operatorHandler.GetOperator)
+		api.PUT("/operator/:id", operatorHandler.UpdateOperator)
+		api.DELETE("/operator/:id", operatorHandler.DeleteOperator)
+	}
+
+	// Server start
+	log.Println("Server starting on :8080")
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }
