@@ -22,4 +22,4 @@ go.work
 
 # Configuration
 config.yaml
-./backend/docker-compose.yml
+docker-compose.yaml
