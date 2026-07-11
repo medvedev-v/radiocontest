@@ -15,8 +15,8 @@ func NewOperatorRepository(db *sql.DB) *OperatorRepository {
 }
 
 func (r *OperatorRepository) Create(operator model.Operator) (int, error) {
-	query := `INSERT INTO operators (callsign, passwordhash) VALUES (?, ?)`
-	result, err := r.db.Exec(query, operator.Callsign, operator.PasswordHash)
+	query := `INSERT INTO operators (callsign) VALUES (?)`
+	result, err := r.db.Exec(query, operator.Callsign)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create operator: %w", err)
 	}
@@ -28,10 +28,10 @@ func (r *OperatorRepository) Create(operator model.Operator) (int, error) {
 }
 
 func (r *OperatorRepository) GetByID(id int) (*model.Operator, error) {
-	query := `SELECT id, username, passwordhash FROM operators WHERE id = ?`
+	query := `SELECT id, callsign FROM operators WHERE id = ?`
 	row := r.db.QueryRow(query, id)
 	var operator model.Operator
-	err := row.Scan(&operator.ID, &operator.Callsign, &operator.PasswordHash)
+	err := row.Scan(&operator.ID, &operator.Callsign)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("operator not found with ID: %d", id)
@@ -42,8 +42,8 @@ func (r *OperatorRepository) GetByID(id int) (*model.Operator, error) {
 }
 
 func (r *OperatorRepository) Update(operator model.Operator) error {
-	query := `UPDATE operators SET username = ?, email = ?, passwordhash = ?, role = ?, created_at = ? WHERE id = ?`
-	_, err := r.db.Exec(query, operator.Callsign, operator.PasswordHash, operator.ID)
+	query := `UPDATE operators SET callsign = ? WHERE id = ?`
+	_, err := r.db.Exec(query, operator.Callsign, operator.ID)
 	if err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
 	}

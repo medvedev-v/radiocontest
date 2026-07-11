@@ -10,12 +10,12 @@ import (
 
 	"github.com/medvedev-v/radiocontest/internal/handler"
 	"github.com/medvedev-v/radiocontest/internal/repository"
-	"github.com/medvedev-v/radiocontest/pkg/mysql"
+	"github.com/medvedev-v/radiocontest/pkg/database"
 )
 
 func StartAndServe() {
 	// DB Connect
-	db, err := mysql.Connect()
+	db, err := database.Connect()
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %v", err)
 	}
