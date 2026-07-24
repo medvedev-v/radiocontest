@@ -1,20 +1,13 @@
-FROM golang:latest AS builder
-
+FROM golang:1.25-alpine AS builder
 WORKDIR /app
-
-COPY ./../../backend/go.mod ./../../backend/go.sum ./
-
+COPY backend/go.mod backend/go.sum ./
 RUN go mod download
+COPY backend/ .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main ./cmd/server
 
-COPY ./../../backend/ .
-
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
-
-FROM alpine:latest  
-
+FROM alpine:latest
 WORKDIR /app
 COPY --from=builder /app/main .
-
+RUN chmod +x /app/main
 EXPOSE 8080
-
 CMD ["./main"]

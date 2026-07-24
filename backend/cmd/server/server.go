@@ -11,6 +11,7 @@ import (
 	"github.com/medvedev-v/radiocontest/internal/handler"
 	"github.com/medvedev-v/radiocontest/internal/repository"
 	"github.com/medvedev-v/radiocontest/pkg/database"
+	"github.com/medvedev-v/radiocontest/internal/middleware/auth"
 )
 
 func StartAndServe() {
@@ -23,6 +24,8 @@ func StartAndServe() {
 
 	// Repos init
 	operatorRepo := repository.NewOperatorRepository(db)
+	userRepo := repository.NewUserRepository(db)
+	sessionRepo := repository.NewSessionRepository(db)
 
 	// Handlers init
 	operatorHandler := handler.NewOperatorHandler(operatorRepo)
@@ -40,13 +43,14 @@ func StartAndServe() {
 	}))
 
 	// API V1
-	api := r.Group("/api/v1")
+	v1 := r.Group("/v1")
+	v1.Use(auth.AuthMiddleware(userRepo, sessionRepo))
 	{
 		// Operator Endpoints
-		api.POST("/operator", operatorHandler.CreateOperator)
-		api.GET("/operator/:id", operatorHandler.GetOperator)
-		api.PUT("/operator/:id", operatorHandler.UpdateOperator)
-		api.DELETE("/operator/:id", operatorHandler.DeleteOperator)
+		v1.POST("/operator", operatorHandler.CreateOperator)
+		v1.GET("/operator/:id", operatorHandler.GetOperator)
+		v1.PUT("/operator/:id", operatorHandler.UpdateOperator)
+		v1.DELETE("/operator/:id", operatorHandler.DeleteOperator)
 	}
 
 	// Server start
